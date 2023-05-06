@@ -1,9 +1,10 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { ContactForm } from './contactForm/ContactForm';
 import { ContactList } from './contactList/ContactList';
 import { Filter } from './filter/Filter';
 import css from './App.module.css';
+import { setSelectionRange } from '@testing-library/user-event/dist/utils';
 
 const initialContacts = [
   { id: nanoid(), name: 'Rosie Simpson', number: '459-12-56' },
@@ -15,21 +16,21 @@ const initialContacts = [
 const CONTACTS = 'contacts';
 
 export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+  // state = {
+  //   contacts: [],
+  //   filter: '',
+  // };
 
-  componentDidMount() {
-    const savedContacts = localStorage.getItem(CONTACTS);
+  // componentDidMount() {
+  //   const savedContacts = localStorage.getItem(CONTACTS);
 
-    if (savedContacts !== null) {
-      const parsedContacts = JSON.parse(savedContacts);
-      this.setState({ contacts: parsedContacts });
-    } else {
-      this.setState({ contacts: initialContacts }); //записуємо початковий масив,
-    }
-  }
+  //   if (savedContacts !== null) {
+  //     const parsedContacts = JSON.parse(savedContacts);
+  //     this.setState({ contacts: parsedContacts });
+  //   } else {
+  //     this.setState({ contacts: initialContacts }); //записуємо початковий масив,
+  //   }
+  // }
 
   // Метод життєвого циклу, який викликається після оновлення стейту.
   // _ цей перший аргумент не використовується в коді.
@@ -108,3 +109,20 @@ export class App extends Component {
     );
   }
 }
+
+export const App = () => {
+  const [contact, setContact] = useState(
+    () => JSON.parse(window.localStorage.getItem(CONTACTS)) ?? initialContacts // беремо контакти з localStorage, якщо немає, то використовуємо initialContacts
+  );
+  const [filter, setFilter] = useState('');
+
+  return (
+    <div className={css.conteiner}>
+      <h1>Phonebook</h1>
+      <ContactForm addContact={this.addContact} />
+      <h2>Contacts</h2>
+      <Filter filter={filter} onChangeInput={onChangeInput} />
+      <ContactList delContact={delContact} contacts={filter()} />
+    </div>
+  );
+};
