@@ -4,7 +4,6 @@ import { ContactForm } from './contactForm/ContactForm';
 import { ContactList } from './contactList/ContactList';
 import { Filter } from './filter/Filter';
 import css from './App.module.css';
-import { setSelectionRange } from '@testing-library/user-event/dist/utils';
 
 const initialContacts = [
   { id: nanoid(), name: 'Rosie Simpson', number: '459-12-56' },
@@ -15,43 +14,23 @@ const initialContacts = [
 
 const CONTACTS = 'contacts';
 
-export class App extends Component {
-  // state = {
-  //   contacts: [],
-  //   filter: '',
-  // };
+export const App = () => {
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(window.localStorage.getItem(CONTACTS)) ?? initialContacts // беремо контакти з localStorage, якщо немає, то використовуємо initialContacts
+  );
+  const [filter, setFilter] = useState('');
 
-  // componentDidMount() {
-  //   const savedContacts = localStorage.getItem(CONTACTS);
+  useEffect(() => {
+    window.localStorage.setItem(CONTACTS, JSON.stringify(contacts));
+  }, [contacts]);
 
-  //   if (savedContacts !== null) {
-  //     const parsedContacts = JSON.parse(savedContacts);
-  //     this.setState({ contacts: parsedContacts });
-  //   } else {
-  //     this.setState({ contacts: initialContacts }); //записуємо початковий масив,
-  //   }
-  // }
-
-  // Метод життєвого циклу, який викликається після оновлення стейту.
-  // _ цей перший аргумент не використовується в коді.
-  componentDidUpdate(_, prevState) {
-    // якщо контакти змінились, то записуємо їх в localStorage
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem(
-        CONTACTS,
-        JSON.stringify(this.state.contacts) // перетворюємо масив в JSON
-      );
-    }
-  }
-
-  onChangeInput = evt => {
-    const { name, value } = evt.currentTarget;
-    this.setState({ [name]: value });
+  const onChangeInput = evt => {
+    setFilter(evt.currentTarget.value);
   };
 
-  addContact = ({ name, number }) => {
+  const addContact = ({ name, number }) => {
     if (
-      this.state.contacts.some(
+      contacts.some(
         value => value.name.toLocaleLowerCase() === name.toLocaleLowerCase()
       )
     ) {
@@ -59,9 +38,9 @@ export class App extends Component {
       alert(`${name} is already in contacts`);
     } else {
       // додавання нового контакту до списку контактів
-      this.setState(oldState => {
+      setContacts(preContacts => {
         const list = [
-          ...oldState.contacts,
+          ...preContacts,
           {
             id: nanoid(),
             name: name,
@@ -69,60 +48,33 @@ export class App extends Component {
           },
         ];
 
-        return { contacts: list };
+        return list;
       });
     }
   };
 
-  filter = () => {
-    const { contacts, filter } = this.state;
-
-    // новий масив, який містить всі контакти, що містять рядок пошуку
-    const filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
+  // функція для фільтрації контактів
+  const filterFn = () => {
+    // фільтруємо масив контактів по значенню фільтра
+    const filteredContacts = contacts.filter(
+      contact => contact.name.toLowerCase().includes(filter.toLowerCase()) // перевіряємо чи є в імені контакту введене значення фільтра
     );
-
     return filteredContacts;
   };
 
-  // отримання параметру id, який потрібно видалити зі списку контактів
-  delContact = id => {
-    // отримання поточного списку контактів зі стану компонента
-    const { contacts } = this.state;
-
-    // Новий масив, який містить всі контакти, окрім того, що має ідентифікатор
-    const filtred = contacts.filter(item => item.id !== id);
-
-    // оновлення властивості contacts
-    this.setState({ contacts: filtred });
+  // функція для видалення контакту
+  const delContact = id => {
+    const filtred = contacts.filter(item => item.id !== id); // фільтруємо масив контактів по ідентифікатору
+    setContacts(filtred); // змінюємо стан масиву контактів
   };
-
-  render() {
-    return (
-      <div className={css.conteiner}>
-        <h1>Phonebook</h1>
-        <ContactForm addContact={this.addContact} />
-        <h2>Contacts</h2>
-        <Filter filter={this.state.filter} onChangeInput={this.onChangeInput} />
-        <ContactList delContact={this.delContact} contacts={this.filter()} />
-      </div>
-    );
-  }
-}
-
-export const App = () => {
-  const [contact, setContact] = useState(
-    () => JSON.parse(window.localStorage.getItem(CONTACTS)) ?? initialContacts // беремо контакти з localStorage, якщо немає, то використовуємо initialContacts
-  );
-  const [filter, setFilter] = useState('');
 
   return (
     <div className={css.conteiner}>
       <h1>Phonebook</h1>
-      <ContactForm addContact={this.addContact} />
+      <ContactForm addContact={addContact} />
       <h2>Contacts</h2>
       <Filter filter={filter} onChangeInput={onChangeInput} />
-      <ContactList delContact={delContact} contacts={filter()} />
+      <ContactList delContact={delContact} contacts={filterFn()} />
     </div>
   );
 };
